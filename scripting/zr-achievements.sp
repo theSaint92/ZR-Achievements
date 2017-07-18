@@ -68,3 +68,58 @@ public void SQL_CreateTable_Callback(Database db, DBResultSet results, const cha
 		return;
 	}
 }
+
+public void OnClientPutInServer(int client)
+{
+
+	if(IsFakeClient(client))
+	{
+		return;
+	}
+
+	if(gH_SQL == null)
+	{
+		return;
+	}
+
+	char[] sAuthID3 = new char[32];
+
+	if(!GetClientAuthId(client, AuthId_Steam3, sAuthID3, 32))
+	{
+		KickClient(client, "%T", "VerificationFailed", client);
+
+		return;
+	}
+
+	//char[] sName = new char[MAX_NAME_LENGTH];
+	//GetClientName(client, sName, MAX_NAME_LENGTH);
+
+	//int iLength = ((strlen(sName) * 2) + 1);
+	//char[] sEscapedName = new char[iLength]; // dynamic arrays! I love you, SourcePawn 1.7!
+	//gH_SQL.Escape(sName, sEscapedName, iLength);
+
+	char[] sQuery = new char[512];
+	FormatEx(sQuery, 512, "INSERT IGNORE INTO zra_stats SET auth='%s';", sAuthID3);
+
+	gH_SQL.Query(SQL_InsertUser_Callback, sQuery, GetClientSerial(client));
+}
+
+public void SQL_InsertUser_Callback(Database db, DBResultSet results, const char[] error, any data)
+{
+	if(results == null)
+	{
+		int client = GetClientFromSerial(data);
+
+		if(client == 0)
+		{
+			LogError("ZR-Achievements! Failed to insert a disconnected player's data to the table. Reason: %s", error);
+		}
+
+		else
+		{
+			LogError("ZR-Achievements! Failed to insert \"%N\"'s data to the table. Reason: %s", client, error);
+		}
+
+		return;
+	}
+}
